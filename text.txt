@@ -1,0 +1,96 @@
+1creating a muli user by defining roles basic changes made:
+a) E:\Web Developmant\Laravel\multipleuser\app\Actions\Fortify\CreateNewUser.php
+	$user->role_id = $input['role_id'];
+        $user->save();
+        // dd($user);
+        $user->save();
+
+        return $user;
+
+b)Creating Role Model
+php artisan make:model Role
+Making relation between role and user model
+	public function users()
+   		 {
+        return $this->hasMany(User::class);
+    		}
+
+Making role migration and linking it with users table
+php artisan make:migration create_roles_table
+E:\Web Developmant\Laravel\multipleuser\database\migrations\2023_08_10_125546_create_roles_table.php
+	$table->id();
+            $table->string('name')->unique();
+            $table->timestamps();
+
+
+$ php artisan make:migration add_role_id_to_users_table
+
+next making seeder
+php artisan make:seeder RolesTableSeeder
+Role::create(['name' => 'superadmin']);
+        Role::create(['name' => 'subadmin']);
+        Role::create(['name' => 'admin']);
+        Role::create(['name' => 'manager']);
+        Role::create(['name' => 'user']);
+
+
+run this to direct inster data to database
+php artisan db:seed --class=RolesTableSeeder
+
+
+
+
+
+
+
+
+
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\user\AdminController;
+use App\Http\Controllers\user\SuperAdminController;
+
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\HomeController;
+
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+
+Route::get('/',[HomeController::class,'index'])->name('home');
+
+// Route::group(['middleware'=>['web'=>'isSuperAdmin'],'prefix' =>'dashboard'],function(){
+//     Route::group(['prefix' => 'super-admin', 'as' => 'super-admin.'],function(){
+//         Route::get('/',[SuperAdminController::class,'dashboard'])->name('dashboard');
+//     });
+
+// });
+Route::group(['prefix' => 'super-admin','middleware'=>['web','isSuperAdmin']],function(){
+    Route::get('/',[SuperAdminController::class,'dashboard'])->name('Sdashboard');
+
+    Route::get('/users',[SuperAdminController::class,'users'])->name('superAdminUsers');
+    Route::get('/manage-role',[SuperAdminController::class,'manageRole'])->name('manageRole');
+    Route::post('/update-role',[SuperAdminController::class,'updateRole'])->name('updateRole');
+});
+
+// Route::group(['middleware'=>['web'=>'isAdmin'],'prefix' =>'dashboard'],function(){
+//     Route::group(['prefix' => '', 'as' => 'admin.'],function(){
+//         Route::get('/',[AdminController::class,'dashboard'])->name('dashboard');
+//     });
+
+// });
+
+Route::group(['prefix' => 'admin','middleware'=>['web','isAdmin']],function(){
+    Route::get('/dashboard',[AdminController::class,'dashboard'])->name('Adashboard');
+});
